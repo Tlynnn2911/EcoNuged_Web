@@ -1,6 +1,6 @@
 function safeNumber(value) {
     let num = Number(value);
-    return isNaN(num) ? 0 : Math.abs(num); // đảm bảo dương
+    return isNaN(num) ? 0 : Math.abs(num);
 }
 function formatNumber(num, decimals = 2) {
     return safeNumber(num).toFixed(decimals);

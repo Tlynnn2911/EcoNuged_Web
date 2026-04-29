@@ -1,6 +1,7 @@
 import sys
 import os
 import logging
+import traceback
 from datetime import datetime, timedelta
 import pandas as pd
 from flask import Flask, render_template, request, jsonify, send_file
@@ -39,6 +40,7 @@ def get_or_create_state(vehicle_id):
         xe_state[vehicle_id] = QuanLyHanhTrinhESG(vehicle_id)
     return xe_state[vehicle_id]
 
+# ---------- ROUTES ----------
 @app.route('/')
 def app_page():
     return render_template('app.html')
@@ -47,7 +49,100 @@ def app_page():
 def dashboard_page():
     return render_template('dashboard.html')
 
-# ... (các API khác giữ nguyên như cũ, chỉ sửa actual_statistics) ...
+@app.route('/api/zones', methods=['GET'])
+def get_zones():
+    zones = lay_danh_sach_vung()
+    return jsonify(zones)
+
+@app.route('/api/check_geofence', methods=['POST'])
+def check_geofence():
+    data = request.json
+    lat = data.get('lat')
+    lon = data.get('lon')
+    cang, loai = kiem_tra_xe_trong_cang(lat, lon)
+    return jsonify({'inside': cang is not None, 'cang': cang, 'loai': loai})
+
+@app.route('/api/simulate_idling', methods=['POST'])
+def simulate_idling():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Invalid JSON"}), 400
+        
+        vehicle_id = data.get('vehicle_id')
+        port_name = data.get('port_name')
+        idle_seconds = float(data.get('idle_seconds', 0))
+        km_driven = float(data.get('km_driven', 0))
+        
+        if idle_seconds < 0:
+            idle_seconds = 0
+        
+        # Tính CO₂
+        co2_data = co2_calc.tinh_co2_toan_phan(km_driven, idle_seconds)
+        
+        # Ghi log
+        log_entry = {
+            "ID_Xe": vehicle_id,
+            "Tên_Cảng": port_name,
+            "Thời_Điểm_Vào": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            "Thời_Điểm_Ra": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            "Tổng_Giây_Chờ": idle_seconds,
+            "Lượng_CO2_kg": co2_data['co2_idling_kg']
+        }
+        logger.ghi_nhat_ky(log_entry)
+        
+        # Tạo Nudge
+        nud = nudge.tao_payload_canh_bao(vehicle_id, port_name, idle_seconds, "CANG")
+        gui_tin_hieu({"event": "simulate_idling", "data": log_entry, "nudge": nud})
+        
+        return jsonify({
+            "status": "ok",
+            "co2_kg": co2_data['co2_idling_kg'],
+            "nudge": nud
+        })
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/kpi', methods=['GET'])
+def get_kpi():
+    total_stats = dashboard.thong_ke_tong_quan()
+    top_drivers = dashboard.lay_top_tai_xe(5)
+    return jsonify({"total": total_stats, "top_drivers": top_drivers})
+
+@app.route('/api/heatmap', methods=['GET'])
+def get_heatmap():
+    heat_data = dashboard.thong_ke_theo_cang()
+    ports = list(heat_data.keys())
+    co2_vals = list(heat_data.values())
+    return jsonify({"ports": ports, "co2": co2_vals})
+
+@app.route('/api/export/excel', methods=['GET'])
+def export_excel():
+    result = report_exporter.xuat_toan_bo()
+    if result.get('excel'):
+        return send_file(result['excel'], as_attachment=True)
+    return jsonify({"error": "No data"}), 404
+
+@app.route('/api/export/pdf', methods=['GET'])
+def export_pdf():
+    result = report_exporter.xuat_toan_bo()
+    if result.get('pdf'):
+        return send_file(result['pdf'], as_attachment=True)
+    return jsonify({"error": "No data"}), 404
+
+@app.route('/api/economic_analysis', methods=['GET'])
+def economic_analysis():
+    so_xe = int(request.args.get('so_xe', 50))
+    so_gio = float(request.args.get('so_gio', 2.5))
+    analysis = economic.du_bao_hieu_qua(so_xe, so_gio)
+    return jsonify({
+        "ton_that_hien_tai_vnd": analysis.get("truoc_ap_dung", {}).get("tong_ton_that_vnd", 0),
+        "tiet_kiem_du_kien_vnd": analysis.get("tiet_kiem_vnd", 0),
+        "ty_le_giam_pct": analysis.get("ty_le_giam_pct", 30),
+        "roi_message": analysis.get("roi_message", ""),
+        "truoc_ap_dung": analysis.get("truoc_ap_dung", {})
+    })
 
 @app.route('/api/actual_statistics', methods=['GET'])
 def actual_statistics():
@@ -55,19 +150,17 @@ def actual_statistics():
     if df.empty:
         return jsonify({"so_xe": 0, "trung_binh_gio_cho": 0, "tong_co2_kg": 0})
     
-    # Chuyển cột thời gian vào thành datetime
+    # Chỉ lấy 7 ngày gần nhất, loại bỏ outlier
     if "Thời_Điểm_Vào" in df.columns:
         df["Thời_Điểm_Vào"] = pd.to_datetime(df["Thời_Điểm_Vào"], errors='coerce')
-        # Chỉ lấy dữ liệu 7 ngày gần nhất (loại bỏ dữ liệu cũ gây nhiễu)
         last_7_days = datetime.now() - timedelta(days=7)
         df = df[df["Thời_Điểm_Vào"] >= last_7_days]
     
     if df.empty:
         return jsonify({"so_xe": 0, "trung_binh_gio_cho": 0, "tong_co2_kg": 0})
     
-    # Lọc bỏ giá trị âm và outlier (> 24h)
     df["Tổng_Giây_Chờ"] = df["Tổng_Giây_Chờ"].abs()
-    df = df[df["Tổng_Giây_Chờ"] <= 86400]  # 24 giờ
+    df = df[df["Tổng_Giây_Chờ"] <= 86400]  # bỏ nếu > 24h
     
     so_xe = df["ID_Xe"].nunique()
     tong_giay = df["Tổng_Giây_Chờ"].sum()
@@ -80,9 +173,6 @@ def actual_statistics():
         "trung_binh_gio_cho": round(trung_binh_gio_cho, 2),
         "tong_co2_kg": round(tong_co2, 2)
     })
-
-# Các route còn lại giữ nguyên (simulate_idling, kpi, heatmap, export...)
-# ... (copy từ các câu trước, đảm bảo đầy đủ)
 
 if __name__ == '__main__':
     os.makedirs('04_DATA', exist_ok=True)

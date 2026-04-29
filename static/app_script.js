@@ -43,7 +43,7 @@ startBtn.addEventListener('click', () => {
 endBtn.addEventListener('click', async () => {
     if (!isIdling || !startTime) return;
     let idleSeconds = Math.floor((Date.now() - startTime) / 1000);
-    if (idleSeconds < 0) idleSeconds = 0; // đảm bảo không âm
+    if (idleSeconds < 0) idleSeconds = 0;
 
     const vehicle_id = vehicleIdInput.value.trim();
     const port_name = portNameSelect.value;
@@ -51,7 +51,7 @@ endBtn.addEventListener('click', async () => {
 
     if (idleSeconds <= 0) {
         resultDiv.innerHTML = `<div><i class="fas fa-exclamation-triangle"></i> Thời gian chờ không hợp lệ (${idleSeconds} giây). Vui lòng thử lại.</div>`;
-        // Reset lại timer để có thể bắt đầu lại
+        // Reset lại timer
         endBtn.disabled = false;
         startBtn.disabled = true;
         startTime = Date.now();
@@ -73,19 +73,34 @@ endBtn.addEventListener('click', async () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
-        const result = await res.json();
-        const co2 = safeNumber(result.co2_kg);
-        const nudgeMsg = result.nudge?.canh_bao?.noi_dung || 'Đã ghi nhận thành công';
-        resultDiv.innerHTML = `
-            <div><i class="fas fa-check-circle" style="color:#1b6e4e;"></i> <strong>✅ Đã ghi nhận</strong></div>
-            <div><i class="fas fa-clock"></i> <strong>Thời gian chờ:</strong> ${idleSeconds} giây (${(idleSeconds/60).toFixed(1)} phút)</div>
-            <div><i class="fas fa-cloud"></i> <strong>CO₂:</strong> ${co2.toFixed(2)} kg</div>
-            <div><i class="fas fa-road"></i> <strong>Quãng đường:</strong> ${km_driven} km</div>
-            <div><i class="fas fa-bullhorn"></i> <strong>Nudge:</strong> ${nudgeMsg.substring(0, 200)}</div>
-        `;
+        // Kiểm tra response có phải JSON không
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            const result = await res.json();
+            if (result.error) {
+                resultDiv.innerHTML = `<div><i class="fas fa-exclamation-triangle"></i> Lỗi server: ${result.error}</div>`;
+            } else {
+                const co2 = safeNumber(result.co2_kg);
+                const nudgeMsg = result.nudge?.canh_bao?.noi_dung || 'Đã ghi nhận thành công';
+                resultDiv.innerHTML = `
+                    <div><i class="fas fa-check-circle" style="color:#1b6e4e;"></i> <strong>✅ Đã ghi nhận</strong></div>
+                    <div><i class="fas fa-clock"></i> <strong>Thời gian chờ:</strong> ${idleSeconds} giây (${(idleSeconds/60).toFixed(1)} phút)</div>
+                    <div><i class="fas fa-cloud"></i> <strong>CO₂:</strong> ${co2.toFixed(2)} kg</div>
+                    <div><i class="fas fa-road"></i> <strong>Quãng đường:</strong> ${km_driven} km</div>
+                    <div><i class="fas fa-bullhorn"></i> <strong>Nudge:</strong> ${nudgeMsg.substring(0, 200)}</div>
+                `;
+            }
+        } else {
+            // Server trả về HTML (lỗi)
+            const text = await res.text();
+            console.error('Server returned HTML:', text.substring(0, 200));
+            resultDiv.innerHTML = `<div><i class="fas fa-exclamation-triangle"></i> Lỗi kết nối server. Vui lòng kiểm tra lại.</div>`;
+        }
         timerDisplay.textContent = `0 giây`;
     } catch (err) {
-        resultDiv.innerHTML = `<div><i class="fas fa-exclamation-triangle"></i> Lỗi: ${err.message}</div>`;
+        console.error(err);
+        resultDiv.innerHTML = `<div><i class="fas fa-exclamation-triangle"></i> Lỗi mạng: ${err.message}</div>`;
+        // Khôi phục để thử lại
         endBtn.disabled = false;
         startBtn.disabled = true;
         startTime = Date.now();
