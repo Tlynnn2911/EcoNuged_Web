@@ -16,9 +16,10 @@
             <i class="fas fa-chalkboard-user"></i>
             <h1>EcoNudge <span class="light">Dashboard</span></h1>
         </div>
-        <p class="tagline">Giám sát KPI & Báo cáo ESG tự động</p>
+        <p class="tagline">Giám sát KPI & Báo cáo ESG tự động (dữ liệu từ App)</p>
     </header>
     <div class="main-grid">
+        <!-- Cột trái: Dự báo kinh tế -->
         <div class="col-left">
             <div class="card glass-card">
                 <div class="card-header">
@@ -26,13 +27,20 @@
                     <h2>Dự báo hiệu quả kinh tế</h2>
                 </div>
                 <div class="economic-controls">
-                    <div class="input-group"><label>Số lượng xe</label><input type="number" id="soXe" value="50" readonly style="background-color:#eef3f0;">
-                    <div class="input-group"><label>Giờ chờ TB/xe (h)</label><input type="number" id="soGio" value="2.5" step="0.1" readonly style="background-color:#eef3f0;">
-                    <button id="calcEconomicBtn" class="btn-secondary">Dự báo</button>
+                    <div class="input-group">
+                        <label>Số lượng xe (thực tế)</label>
+                        <input type="number" id="soXe" value="0" readonly style="background-color:#eef3f0;">
+                    </div>
+                    <div class="input-group">
+                        <label>Giờ chờ TB/xe (h) (thực tế)</label>
+                        <input type="number" id="soGio" value="0" step="0.1" readonly style="background-color:#eef3f0;">
+                    </div>
+                    <button id="refreshBtn" class="btn-secondary"><i class="fas fa-sync-alt"></i> Làm mới</button>
                 </div>
                 <div id="economicResult" class="economic-detail"></div>
             </div>
         </div>
+        <!-- Cột phải: KPI và Heatmap -->
         <div class="col-right">
             <div class="card glass-card">
                 <div class="card-header">
@@ -45,10 +53,16 @@
                     <div class="stat"><i class="fas fa-cloud"></i> <span>--</span><small>kg CO₂</small></div>
                     <div class="stat"><i class="fas fa-clock"></i> <span>--</span><small>giờ chờ</small></div>
                 </div>
-                <div class="leaderboard"><h3><i class="fas fa-trophy"></i> Top tài xế</h3><ul id="topDrivers" class="driver-list"></ul></div>
+                <div class="leaderboard">
+                    <h3><i class="fas fa-trophy"></i> Top tài xế</h3>
+                    <ul id="topDrivers" class="driver-list"></ul>
+                </div>
             </div>
             <div class="card glass-card">
-                <div class="card-header"><i class="fas fa-chart-column"></i><h2>Phân bổ CO₂ theo cảng</h2></div>
+                <div class="card-header">
+                    <i class="fas fa-chart-column"></i>
+                    <h2>Phân bổ CO₂ theo cảng</h2>
+                </div>
                 <canvas id="co2Chart" height="220"></canvas>
             </div>
         </div>
@@ -56,7 +70,6 @@
     <div class="action-bar">
         <button id="exportExcelBtn" class="btn-excel"><i class="fas fa-file-excel"></i> Xuất Excel ESG</button>
         <button id="exportPdfBtn" class="btn-pdf"><i class="fas fa-file-pdf"></i> Xuất PDF báo cáo</button>
-        <button id="refreshBtn" class="btn-refresh"><i class="fas fa-sync-alt"></i> Làm mới</button>
     </div>
 </div>
 <script src="{{ url_for('static', filename='dashboard_script.js') }}"></script>

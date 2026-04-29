@@ -38,14 +38,17 @@ def get_or_create_state(vehicle_id):
         xe_state[vehicle_id] = QuanLyHanhTrinhESG(vehicle_id)
     return xe_state[vehicle_id]
 
+# ---------- TRANG CHỦ: APP (mô phỏng idling) ----------
 @app.route('/')
-def dashboard_page():
-    return render_template('dashboard.html')
-
-@app.route('/app')
 def app_page():
     return render_template('app.html')
 
+# ---------- DASHBOARD (quản trị) ----------
+@app.route('/dashboard')
+def dashboard_page():
+    return render_template('dashboard.html')
+
+# ---------- CÁC API GIỮ NGUYÊN ----------
 @app.route('/api/zones', methods=['GET'])
 def get_zones():
     zones = lay_danh_sach_vung()
@@ -67,7 +70,6 @@ def simulate_idling():
     idle_seconds = float(data['idle_seconds'])
     km_driven = float(data.get('km_driven', 0))
 
-    # Đảm bảo idle_seconds không âm
     if idle_seconds < 0:
         idle_seconds = 0
 
@@ -134,7 +136,6 @@ def actual_statistics():
     df = dashboard.nap_du_lieu()
     if df.empty:
         return jsonify({"so_xe": 0, "trung_binh_gio_cho": 0, "tong_co2_kg": 0})
-    # Lọc bỏ các giá trị âm (nếu có) và lấy trị tuyệt đối
     df["Tổng_Giây_Chờ"] = df["Tổng_Giây_Chờ"].abs()
     df["Lượng_CO2_kg"] = df["Lượng_CO2_kg"].abs()
     so_xe = df["ID_Xe"].nunique()
