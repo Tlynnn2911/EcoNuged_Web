@@ -52,7 +52,7 @@ async function loadHeatmap() {
     } catch (err) { console.warn(err); }
 }
 
-document.getElementById('calcEconomicBtn').addEventListener('click', async () => {
+async function runEconomicForecast() {
     const soXe = parseInt(document.getElementById('soXe').value, 10);
     const soGio = parseFloat(document.getElementById('soGio').value);
     try {
@@ -74,11 +74,28 @@ document.getElementById('calcEconomicBtn').addEventListener('click', async () =>
         }
         document.getElementById('economicResult').innerHTML = html;
     } catch (err) { document.getElementById('economicResult').innerHTML = `<div>Lỗi: ${err.message}</div>`; }
-});
+}
 
+async function loadActualDataAndForecast() {
+    try {
+        const res = await fetch('/api/actual_statistics');
+        const data = await res.json();
+        if (data.so_xe > 0) {
+            document.getElementById('soXe').value = data.so_xe;
+            document.getElementById('soGio').value = data.trung_binh_gio_cho;
+        }
+        runEconomicForecast();
+    } catch (err) {
+        console.warn('Không lấy được dữ liệu thực tế, dùng mặc định');
+        runEconomicForecast();
+    }
+}
+
+document.getElementById('calcEconomicBtn').addEventListener('click', runEconomicForecast);
 document.getElementById('exportExcelBtn').onclick = () => window.location.href = '/api/export/excel';
 document.getElementById('exportPdfBtn').onclick = () => window.location.href = '/api/export/pdf';
-document.getElementById('refreshBtn').onclick = () => { loadKPI(); loadHeatmap(); };
+document.getElementById('refreshBtn').onclick = () => { loadKPI(); loadHeatmap(); loadActualDataAndForecast(); };
 
 loadKPI();
 loadHeatmap();
+loadActualDataAndForecast();
