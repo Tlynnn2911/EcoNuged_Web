@@ -150,17 +150,19 @@ def actual_statistics():
     if df.empty:
         return jsonify({"so_xe": 0, "trung_binh_gio_cho": 0, "tong_co2_kg": 0})
     
-    # Chỉ lấy 7 ngày gần nhất, loại bỏ outlier
+    # Chuyển cột thời gian vào thành datetime
     if "Thời_Điểm_Vào" in df.columns:
         df["Thời_Điểm_Vào"] = pd.to_datetime(df["Thời_Điểm_Vào"], errors='coerce')
-        last_7_days = datetime.now() - timedelta(days=7)
-        df = df[df["Thời_Điểm_Vào"] >= last_7_days]
+        # Chỉ lấy 24 giờ gần nhất (hoặc 7 ngày – tuỳ ý)
+        last_day = datetime.now() - timedelta(days=1)
+        df = df[df["Thời_Điểm_Vào"] >= last_day]
     
     if df.empty:
         return jsonify({"so_xe": 0, "trung_binh_gio_cho": 0, "tong_co2_kg": 0})
     
+    # Lọc giá trị âm và outlier: chỉ lấy thời gian chờ <= 7200 giây (2 giờ)
     df["Tổng_Giây_Chờ"] = df["Tổng_Giây_Chờ"].abs()
-    df = df[df["Tổng_Giây_Chờ"] <= 86400]  # bỏ nếu > 24h
+    df = df[df["Tổng_Giây_Chờ"] <= 7200]  # 2 giờ
     
     so_xe = df["ID_Xe"].nunique()
     tong_giay = df["Tổng_Giây_Chờ"].sum()
