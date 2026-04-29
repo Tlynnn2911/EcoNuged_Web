@@ -99,8 +99,40 @@ document.getElementById('refreshBtn').addEventListener('click', () => {
     loadActualDataAndUpdate();
 });
 
-document.getElementById('exportExcelBtn').onclick = () => window.location.href = '/api/export/excel';
-document.getElementById('exportPdfBtn').onclick = () => window.location.href = '/api/export/pdf';
+async function exportReport(type) {
+    const btn = type === 'excel' ? document.getElementById('exportExcelBtn') : document.getElementById('exportPdfBtn');
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Đang xuất...`;
+    btn.disabled = true;
+    try {
+        const res = await fetch(`/api/export/${type}`);
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({ error: 'Lỗi không xác định' }));
+            alert(`❌ Không thể xuất báo cáo:\n${err.error}`);
+            return;
+        }
+        // Tải file thành công
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const disposition = res.headers.get('Content-Disposition') || '';
+        const match = disposition.match(/filename="?([^"]+)"?/);
+        a.download = match ? match[1] : `BaoCao_ESG.${type === 'excel' ? 'xlsx' : 'pdf'}`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        alert(`❌ Lỗi kết nối: ${err.message}`);
+    } finally {
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+    }
+}
+
+document.getElementById('exportExcelBtn').onclick = () => exportReport('excel');
+document.getElementById('exportPdfBtn').onclick = () => exportReport('pdf');
 
 loadKPI();
 loadHeatmap();

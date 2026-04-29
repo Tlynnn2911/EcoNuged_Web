@@ -119,17 +119,41 @@ def get_heatmap():
 
 @app.route('/api/export/excel', methods=['GET'])
 def export_excel():
-    result = report_exporter.xuat_toan_bo()
-    if result.get('excel'):
-        return send_file(result['excel'], as_attachment=True)
-    return jsonify({"error": "No data"}), 404
+    try:
+        result = report_exporter.xuat_toan_bo()
+        excel_path = result.get('excel')
+        if excel_path and os.path.exists(excel_path):
+            abs_path = os.path.abspath(excel_path)
+            filename = os.path.basename(abs_path)
+            return send_file(
+                abs_path,
+                as_attachment=True,
+                download_name=filename,
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+        return jsonify({"error": "Không tìm thấy file Excel. Hãy đảm bảo có dữ liệu idling."}), 404
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/export/pdf', methods=['GET'])
 def export_pdf():
-    result = report_exporter.xuat_toan_bo()
-    if result.get('pdf'):
-        return send_file(result['pdf'], as_attachment=True)
-    return jsonify({"error": "No data"}), 404
+    try:
+        result = report_exporter.xuat_toan_bo()
+        pdf_path = result.get('pdf')
+        if pdf_path and os.path.exists(pdf_path):
+            abs_path = os.path.abspath(pdf_path)
+            filename = os.path.basename(abs_path)
+            return send_file(
+                abs_path,
+                as_attachment=True,
+                download_name=filename,
+                mimetype='application/pdf'
+            )
+        return jsonify({"error": "Không tìm thấy file PDF. Hãy đảm bảo reportlab đã được cài đặt và có dữ liệu."}), 404
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/economic_analysis', methods=['GET'])
 def economic_analysis():

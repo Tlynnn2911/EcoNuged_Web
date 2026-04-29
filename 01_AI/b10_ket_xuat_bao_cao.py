@@ -1,6 +1,6 @@
 """
 B10 – Kết xuất Báo cáo Phát thải ESG (Scope 3)
-Đã sửa lỗi dữ liệu âm, lỗi font PDF, hoạt động trên Render.
+Đã sửa lỗi dữ liệu âm, dùng font mặc định (không cần DejaVuSans).
 """
 
 import os
@@ -110,6 +110,7 @@ class KetXuatBaoCaoESG:
         story = []
         styles = getSampleStyleSheet()
 
+        # Dùng font mặc định Helvetica (không cần font ngoài, tránh lỗi)
         XANH = colors.HexColor('#1A7A4A')
 
         style_tieude = ParagraphStyle('tieude', parent=styles['Title'],

@@ -302,3 +302,39 @@ footer {
     padding-top: 20px;
     margin-top: 15px;
 }
+/* ===== NAV SWITCHER ===== */
+.nav-switcher {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+}
+.nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 22px;
+    border-radius: 40px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: rgba(255,255,255,0.75);
+    background: rgba(255,255,255,0.12);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    backdrop-filter: blur(4px);
+    transition: all 0.2s ease;
+}
+.nav-btn:hover {
+    background: rgba(255,255,255,0.22);
+    color: white;
+    transform: translateY(-1px);
+}
+.nav-btn--active {
+    background: rgba(255,255,255,0.95);
+    color: #0f3b2c;
+    border-color: transparent;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+}
+.nav-btn--active:hover {
+    background: white;
+    color: #0f3b2c;
+}
