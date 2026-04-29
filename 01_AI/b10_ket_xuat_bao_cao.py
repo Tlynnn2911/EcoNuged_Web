@@ -1,6 +1,6 @@
 """
 B10 – Kết xuất Báo cáo Phát thải ESG (Scope 3)
-Đã sửa lỗi font chữ, hoạt động trên Render.
+Đã sửa lỗi dữ liệu âm, lỗi font PDF, hoạt động trên Render.
 """
 
 import os
@@ -34,9 +34,18 @@ class KetXuatBaoCaoESG:
             raise FileNotFoundError(f"Không tìm thấy file log: {self.path_log}")
         df = pd.read_csv(self.path_log, encoding='utf-8-sig')
         df.columns = [c.strip() for c in df.columns]
+        
+        # Làm sạch dữ liệu: loại bỏ giá trị âm và outlier
+        if "Tổng_Giây_Chờ" in df.columns:
+            df["Tổng_Giây_Chờ"] = df["Tổng_Giây_Chờ"].abs()
+            df = df[df["Tổng_Giây_Chờ"] <= 86400]  # bỏ nếu > 24h
+        if "Lượng_CO2_kg" in df.columns:
+            df["Lượng_CO2_kg"] = df["Lượng_CO2_kg"].abs()
         return df
 
     def tong_hop_scope3(self, df: pd.DataFrame) -> dict:
+        if df.empty:
+            return {}
         tong_co2 = df["Lượng_CO2_kg"].sum()
         tong_gio = df["Tổng_Giây_Chờ"].sum() / 3600
         so_su_kien = len(df)
@@ -45,7 +54,7 @@ class KetXuatBaoCaoESG:
         return {
             "ky_bao_cao": datetime.now().strftime("%Y-%m"),
             "tieu_chuan": "GHG Protocol – Scope 3 Category 4",
-            "nguon_he_so": self.config.get("nguon_phap_ly", ""),
+            "nguon_he_so": self.config.get("nguon_phap_ly", "QĐ 2626/QĐ-BTNMT"),
             "ef_diesel": self.config.get("he_so_ef_diesel", 2.683),
             "don_vi": "kg CO2e",
             "tong_co2_kg": round(tong_co2, 4),
@@ -58,6 +67,8 @@ class KetXuatBaoCaoESG:
 
     def xuat_excel(self) -> str:
         df = self._nap_log()
+        if df.empty:
+            raise ValueError("Không có dữ liệu hợp lệ để xuất báo cáo.")
         tom_tat = self.tong_hop_scope3(df)
         ten_file = f"BaoCao_ESG_Scope3_{self.ngay_xuat}.xlsx"
         path_out = os.path.join(_thu_muc_data(), ten_file)
@@ -87,6 +98,8 @@ class KetXuatBaoCaoESG:
             return ""
 
         df = self._nap_log()
+        if df.empty:
+            raise ValueError("Không có dữ liệu hợp lệ để xuất báo cáo.")
         tom_tat = self.tong_hop_scope3(df)
         ten_file = f"BaoCao_ESG_Scope3_{self.ngay_xuat}.pdf"
         path_out = os.path.join(_thu_muc_data(), ten_file)
@@ -97,7 +110,6 @@ class KetXuatBaoCaoESG:
         story = []
         styles = getSampleStyleSheet()
 
-        # Màu xanh thương hiệu
         XANH = colors.HexColor('#1A7A4A')
 
         style_tieude = ParagraphStyle('tieude', parent=styles['Title'],
@@ -112,14 +124,12 @@ class KetXuatBaoCaoESG:
         style_vb = ParagraphStyle('vb', parent=styles['Normal'],
                                    fontSize=10, leading=14)
 
-        # --- Tiêu đề ---
         story.append(Paragraph("BÁO CÁO PHÁT THẢI KHÍ NHÀ KÍNH", style_tieude))
         story.append(Paragraph("EcoNudge Gate – Hành lang Logistics Hải Phòng", style_phude))
         story.append(Paragraph(f"Kỳ báo cáo: {tom_tat['ky_bao_cao']}  |  Xuất ngày: {datetime.now().strftime('%d/%m/%Y %H:%M')}", style_phude))
         story.append(HRFlowable(width="100%", thickness=1.5, color=XANH))
         story.append(Spacer(1, 0.4*cm))
 
-        # --- Mục 1 ---
         story.append(Paragraph("1. PHẠM VI & TIÊU CHUẨN ÁP DỤNG", style_mucdo))
         story.append(Paragraph(
             f"• Tiêu chuẩn: <b>{tom_tat['tieu_chuan']}</b><br/>"
@@ -129,7 +139,6 @@ class KetXuatBaoCaoESG:
             style_vb
         ))
 
-        # --- Mục 2 ---
         story.append(Paragraph("2. KẾT QUẢ PHÁT THẢI TỔNG HỢP", style_mucdo))
         data_tt = [
             ["Chỉ số", "Giá trị"],
@@ -150,29 +159,27 @@ class KetXuatBaoCaoESG:
         ]))
         story.append(tbl)
 
-        # --- Mục 3 ---
-        story.append(Paragraph("3. PHÂN BỔ PHÁT THẢI THEO CỤM CẢNG", style_mucdo))
-        data_cang = [["Cụm Cảng / Khu vực", "CO₂ Phát thải (kg)"]]
-        for ten, co2 in tom_tat["phan_bo_theo_cang"].items():
-            data_cang.append([ten, f"{co2:,.4f}"])
-        tbl2 = Table(data_cang, colWidths=[11*cm, 6*cm])
-        tbl2.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), XANH),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.lightgrey),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.HexColor('#F0FFF4'), colors.white]),
-            ('PADDING', (0, 0), (-1, -1), 6),
-        ]))
-        story.append(tbl2)
+        if tom_tat.get("phan_bo_theo_cang"):
+            story.append(Paragraph("3. PHÂN BỔ PHÁT THẢI THEO CỤM CẢNG", style_mucdo))
+            data_cang = [["Cụm Cảng / Khu vực", "CO₂ Phát thải (kg)"]]
+            for ten, co2 in tom_tat["phan_bo_theo_cang"].items():
+                data_cang.append([ten, f"{co2:,.4f}"])
+            tbl2 = Table(data_cang, colWidths=[11*cm, 6*cm])
+            tbl2.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), XANH),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.lightgrey),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.HexColor('#F0FFF4'), colors.white]),
+                ('PADDING', (0, 0), (-1, -1), 6),
+            ]))
+            story.append(tbl2)
 
-        # --- Chữ ký ---
         story.append(Spacer(1, 1*cm))
         story.append(HRFlowable(width="100%", thickness=0.5, color=colors.lightgrey))
         story.append(Paragraph(
-            "Báo cáo được tạo tự động bởi hệ thống EcoNudge Gate. "
-            "Dữ liệu sử dụng hệ số phát thải theo Quyết định 2626/QĐ-BTNMT.",
+            "Báo cáo được tạo tự động bởi hệ thống EcoNudge Gate. Dữ liệu sử dụng hệ số phát thải theo Quyết định 2626/QĐ-BTNMT.",
             ParagraphStyle('footer', parent=styles['Normal'],
                            fontSize=8, textColor=colors.grey, alignment=TA_CENTER)
         ))
@@ -183,4 +190,14 @@ class KetXuatBaoCaoESG:
 
     def xuat_toan_bo(self) -> dict:
         print("[B10] Bắt đầu kết xuất báo cáo ESG Scope 3...")
-        return {"excel": self.xuat_excel(), "pdf": self.xuat_pdf()}
+        excel = None
+        pdf = None
+        try:
+            excel = self.xuat_excel()
+        except Exception as e:
+            print(f"[B10] Lỗi xuất Excel: {e}")
+        try:
+            pdf = self.xuat_pdf()
+        except Exception as e:
+            print(f"[B10] Lỗi xuất PDF: {e}")
+        return {"excel": excel, "pdf": pdf}
