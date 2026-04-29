@@ -32,7 +32,7 @@ async function loadKPI() {
             topList.innerHTML = '<li>Chưa có dữ liệu</li>';
         }
         document.getElementById('kpiTimestamp').innerHTML = `Cập nhật: ${new Date().toLocaleTimeString()}`;
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error('loadKPI error:', err); }
 }
 
 let chart;
@@ -49,7 +49,7 @@ async function loadHeatmap() {
             data: { labels: ports, datasets: [{ label: 'CO₂ (kg)', data: co2Values, backgroundColor: '#2c8c6e', borderRadius: 12 }] },
             options: { responsive: true, maintainAspectRatio: true, scales: { y: { beginAtZero: true, title: { display: true, text: 'kg CO₂' } } } }
         });
-    } catch (err) { console.warn(err); }
+    } catch (err) { console.warn('loadHeatmap error:', err); }
 }
 
 async function updateEconomicForecast() {
@@ -77,23 +77,34 @@ async function updateEconomicForecast() {
             html += `<div class="economic-line"><i class="fas fa-co2"></i> <strong>CO₂ hiện tại:</strong> ${safeNumber(data.truoc_ap_dung.tong_co2_kg).toFixed(2)} kg</div>`;
         }
         document.getElementById('economicResult').innerHTML = html;
-    } catch (err) { document.getElementById('economicResult').innerHTML = `<div>Lỗi: ${err.message}</div>`; }
+    } catch (err) { 
+        console.error('updateEconomicForecast error:', err);
+        document.getElementById('economicResult').innerHTML = `<div class="economic-line"><i class="fas fa-exclamation-triangle"></i> Lỗi tải dữ liệu: ${err.message}</div>`;
+    }
 }
 
 async function loadActualDataAndUpdate() {
     try {
         const res = await fetch('/api/actual_statistics');
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+        }
         const data = await res.json();
-        document.getElementById('soXe').value = data.so_xe;
-        document.getElementById('soGio').value = data.trung_binh_gio_cho;
+        console.log('📊 Actual statistics:', data); // Xem console để biết dữ liệu trả về
+        if (data.so_xe !== undefined) {
+            document.getElementById('soXe').value = data.so_xe;
+            document.getElementById('soGio').value = data.trung_binh_gio_cho || 0;
+        }
         await updateEconomicForecast();
     } catch (err) {
-        console.warn('Không lấy được dữ liệu thực tế');
-        updateEconomicForecast();
+        console.error('loadActualDataAndUpdate error:', err);
+        document.getElementById('economicResult').innerHTML = `<div class="economic-line"><i class="fas fa-exclamation-triangle"></i> Không thể lấy dữ liệu thực tế: ${err.message}</div>`;
     }
 }
 
+// Sự kiện nút làm mới
 document.getElementById('refreshBtn').addEventListener('click', () => {
+    console.log('🔄 Làm mới dữ liệu...');
     loadKPI();
     loadHeatmap();
     loadActualDataAndUpdate();
@@ -107,11 +118,10 @@ async function exportReport(type) {
     try {
         const res = await fetch(`/api/export/${type}`);
         if (!res.ok) {
-            const err = await res.json().catch(() => ({ error: 'Lỗi không xác định' }));
-            alert(`❌ Không thể xuất báo cáo:\n${err.error}`);
+            const errorText = await res.text();
+            alert(`❌ Không thể xuất báo cáo!\n${errorText.substring(0, 200)}`);
             return;
         }
-        // Tải file thành công
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -134,6 +144,7 @@ async function exportReport(type) {
 document.getElementById('exportExcelBtn').onclick = () => exportReport('excel');
 document.getElementById('exportPdfBtn').onclick = () => exportReport('pdf');
 
+// Khởi tạo
 loadKPI();
 loadHeatmap();
 loadActualDataAndUpdate();

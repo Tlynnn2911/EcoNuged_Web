@@ -1,6 +1,6 @@
 """
 B10 – Kết xuất Báo cáo Phát thải ESG (Scope 3)
-Đã sửa lỗi dữ liệu âm, dùng font mặc định (không cần DejaVuSans).
+Đã sửa lỗi font chữ, tự động tìm DejaVuSans, fallback Helvetica.
 """
 
 import os
@@ -34,11 +34,10 @@ class KetXuatBaoCaoESG:
             raise FileNotFoundError(f"Không tìm thấy file log: {self.path_log}")
         df = pd.read_csv(self.path_log, encoding='utf-8-sig')
         df.columns = [c.strip() for c in df.columns]
-        
-        # Làm sạch dữ liệu: loại bỏ giá trị âm và outlier
+        # Làm sạch dữ liệu
         if "Tổng_Giây_Chờ" in df.columns:
             df["Tổng_Giây_Chờ"] = df["Tổng_Giây_Chờ"].abs()
-            df = df[df["Tổng_Giây_Chờ"] <= 86400]  # bỏ nếu > 24h
+            df = df[df["Tổng_Giây_Chờ"] <= 86400]
         if "Lượng_CO2_kg" in df.columns:
             df["Lượng_CO2_kg"] = df["Lượng_CO2_kg"].abs()
         return df
@@ -93,9 +92,25 @@ class KetXuatBaoCaoESG:
             from reportlab.lib.units import cm
             from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
             from reportlab.lib.enums import TA_CENTER, TA_LEFT
+            from reportlab.pdfbase import pdfmetrics
+            from reportlab.pdfbase.ttfonts import TTFont
         except ImportError:
             print("[B10] ⚠️ reportlab chưa cài. Chạy: pip install reportlab")
             return ""
+
+        # Đăng ký font tiếng Việt (DejaVuSans) nếu có
+        _font_dir = os.path.dirname(os.path.abspath(__file__))
+        _font_path = os.path.join(_font_dir, 'DejaVuSans.ttf')
+        _font_name = 'Helvetica'  # fallback
+        if os.path.exists(_font_path):
+            try:
+                pdfmetrics.registerFont(TTFont('DejaVuSans', _font_path))
+                _font_name = 'DejaVuSans'
+                print("[B10] ✅ Đã đăng ký font DejaVuSans")
+            except Exception as e:
+                print(f"[B10] ⚠️ Lỗi đăng ký font: {e}, dùng Helvetica")
+        else:
+            print("[B10] ⚠️ Không tìm thấy DejaVuSans.ttf trong 01_AI/, dùng Helvetica (tiếng Việt có thể lỗi)")
 
         df = self._nap_log()
         if df.empty:
@@ -110,20 +125,19 @@ class KetXuatBaoCaoESG:
         story = []
         styles = getSampleStyleSheet()
 
-        # Dùng font mặc định Helvetica (không cần font ngoài, tránh lỗi)
         XANH = colors.HexColor('#1A7A4A')
-
+        # Định nghĩa style với font đã đăng ký
         style_tieude = ParagraphStyle('tieude', parent=styles['Title'],
-                                       fontSize=18, textColor=XANH,
+                                       fontName=_font_name, fontSize=18, textColor=XANH,
                                        spaceAfter=4, alignment=TA_CENTER)
         style_phude = ParagraphStyle('phude', parent=styles['Normal'],
-                                      fontSize=10, textColor=colors.grey,
+                                      fontName=_font_name, fontSize=10, textColor=colors.grey,
                                       spaceAfter=12, alignment=TA_CENTER)
         style_mucdo = ParagraphStyle('mucdo', parent=styles['Heading2'],
-                                      fontSize=13, textColor=XANH,
+                                      fontName=_font_name, fontSize=13, textColor=XANH,
                                       spaceBefore=14, spaceAfter=4)
         style_vb = ParagraphStyle('vb', parent=styles['Normal'],
-                                   fontSize=10, leading=14)
+                                   fontName=_font_name, fontSize=10, leading=14)
 
         story.append(Paragraph("BÁO CÁO PHÁT THẢI KHÍ NHÀ KÍNH", style_tieude))
         story.append(Paragraph("EcoNudge Gate – Hành lang Logistics Hải Phòng", style_phude))
@@ -152,7 +166,8 @@ class KetXuatBaoCaoESG:
         tbl.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), XANH),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTNAME', (0, 0), (-1, 0), _font_name),
+            ('FONTNAME', (0, 1), (-1, -1), _font_name),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('GRID', (0, 0), (-1, -1), 0.5, colors.lightgrey),
             ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.HexColor('#F0FFF4'), colors.white]),
@@ -169,7 +184,8 @@ class KetXuatBaoCaoESG:
             tbl2.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), XANH),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTNAME', (0, 0), (-1, 0), _font_name),
+                ('FONTNAME', (0, 1), (-1, -1), _font_name),
                 ('FONTSIZE', (0, 0), (-1, -1), 10),
                 ('GRID', (0, 0), (-1, -1), 0.5, colors.lightgrey),
                 ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.HexColor('#F0FFF4'), colors.white]),
@@ -182,7 +198,7 @@ class KetXuatBaoCaoESG:
         story.append(Paragraph(
             "Báo cáo được tạo tự động bởi hệ thống EcoNudge Gate. Dữ liệu sử dụng hệ số phát thải theo Quyết định 2626/QĐ-BTNMT.",
             ParagraphStyle('footer', parent=styles['Normal'],
-                           fontSize=8, textColor=colors.grey, alignment=TA_CENTER)
+                           fontName=_font_name, fontSize=8, textColor=colors.grey, alignment=TA_CENTER)
         ))
 
         doc.build(story)

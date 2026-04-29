@@ -17,15 +17,16 @@
             <h1>EcoNudge <span class="light">Dashboard</span></h1>
         </div>
         <p class="tagline">Giám sát KPI & Báo cáo ESG tự động (dữ liệu từ App)</p>
-        <div class="nav-switcher">
-            <a href="/" class="nav-btn">
+                <div class="nav-switcher">
+            <a href="/" class="nav-btn nav-btn--active">
                 <i class="fas fa-truck-fast"></i> Tài Xế
             </a>
-            <a href="/dashboard" class="nav-btn nav-btn--active">
+            <a href="/dashboard" class="nav-btn">
                 <i class="fas fa-chalkboard-user"></i> Dashboard
             </a>
         </div>
     </header>
+
     <div class="main-grid">
         <!-- Cột trái: Dự báo kinh tế -->
         <div class="col-left">
@@ -43,11 +44,14 @@
                         <label>Giờ chờ TB/xe (h) (thực tế)</label>
                         <input type="number" id="soGio" value="0" step="0.1" readonly style="background-color:#eef3f0;">
                     </div>
-                    <button id="refreshBtn" class="btn-secondary"><i class="fas fa-sync-alt"></i> Làm mới</button>
+                    <button id="refreshBtn" class="btn-secondary"><i class="fas fa-sync-alt"></i> Làm mới dữ liệu</button>
                 </div>
-                <div id="economicResult" class="economic-detail"></div>
+                <div id="economicResult" class="economic-detail">
+                    <!-- Kết quả dự báo sẽ hiển thị ở đây -->
+                </div>
             </div>
         </div>
+
         <!-- Cột phải: KPI và Heatmap -->
         <div class="col-right">
             <div class="card glass-card">
@@ -66,6 +70,7 @@
                     <ul id="topDrivers" class="driver-list"></ul>
                 </div>
             </div>
+
             <div class="card glass-card">
                 <div class="card-header">
                     <i class="fas fa-chart-column"></i>
@@ -75,6 +80,7 @@
             </div>
         </div>
     </div>
+
     <div class="action-bar">
         <button id="exportExcelBtn" class="btn-excel"><i class="fas fa-file-excel"></i> Xuất Excel ESG</button>
         <button id="exportPdfBtn" class="btn-pdf"><i class="fas fa-file-pdf"></i> Xuất PDF báo cáo</button>
