@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoNudge Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="app-container">
+    <header class="hero">
+        <div class="brand">
+            <i class="fas fa-chalkboard-user"></i>
+            <h1>EcoNudge <span class="light">Dashboard</span></h1>
+        </div>
+        <p class="tagline">Giám sát KPI & Báo cáo ESG tự động</p>
+    </header>
+    <div class="main-grid">
+        <div class="col-left">
+            <div class="card glass-card">
+                <div class="card-header">
+                    <i class="fas fa-chart-simple"></i>
+                    <h2>Dự báo hiệu quả kinh tế</h2>
+                </div>
+                <div class="economic-controls">
+                    <div class="input-group"><label>Số lượng xe</label><input type="number" id="soXe" value="50"></div>
+                    <div class="input-group"><label>Giờ chờ TB/xe (h)</label><input type="number" id="soGio" value="2.5" step="0.1"></div>
+                    <button id="calcEconomicBtn" class="btn-secondary">Dự báo</button>
+                </div>
+                <div id="economicResult" class="economic-detail"></div>
+            </div>
+        </div>
+        <div class="col-right">
+            <div class="card glass-card">
+                <div class="card-header">
+                    <i class="fas fa-chalkboard-user"></i>
+                    <h2>Bảng KPI</h2>
+                    <span class="update-time" id="kpiTimestamp"></span>
+                </div>
+                <div class="kpi-stats" id="kpiSummary">
+                    <div class="stat"><i class="fas fa-truck"></i> <span>--</span><small>Xe</small></div>
+                    <div class="stat"><i class="fas fa-cloud"></i> <span>--</span><small>kg CO₂</small></div>
+                    <div class="stat"><i class="fas fa-clock"></i> <span>--</span><small>giờ chờ</small></div>
+                </div>
+                <div class="leaderboard"><h3><i class="fas fa-trophy"></i> Top tài xế</h3><ul id="topDrivers" class="driver-list"></ul></div>
+            </div>
+            <div class="card glass-card">
+                <div class="card-header"><i class="fas fa-chart-column"></i><h2>Phân bổ CO₂ theo cảng</h2></div>
+                <canvas id="co2Chart" height="220"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="action-bar">
+        <button id="exportExcelBtn" class="btn-excel"><i class="fas fa-file-excel"></i> Xuất Excel ESG</button>
+        <button id="exportPdfBtn" class="btn-pdf"><i class="fas fa-file-pdf"></i> Xuất PDF báo cáo</button>
+        <button id="refreshBtn" class="btn-refresh"><i class="fas fa-sync-alt"></i> Làm mới</button>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='dashboard_script.js') }}"></script>
+</body>
+</html>

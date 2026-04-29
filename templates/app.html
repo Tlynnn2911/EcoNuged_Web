@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoNudge Gate - App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="app-container" style="max-width: 800px; margin: auto;">
+    <header class="hero">
+        <div class="brand">
+            <i class="fas fa-leaf brand-icon"></i>
+            <h1>EcoNudge <span class="light">Gate</span></h1>
+        </div>
+        <p class="tagline">Giám sát idling thông minh · Cắt giảm CO₂</p>
+    </header>
+    <div class="card glass-card">
+        <div class="card-header">
+            <i class="fas fa-truck-fast"></i>
+            <h2>Mô phỏng Idling thời gian thực</h2>
+        </div>
+        <div class="simulate-form">
+            <div class="input-group">
+                <label><i class="fas fa-id-card"></i> Mã xe</label>
+                <input type="text" id="vehicle_id" value="15H-001.AI" required>
+            </div>
+            <div class="input-group">
+                <label><i class="fas fa-anchor"></i> Cảng</label>
+                <select id="port_name">
+                    <option value="Tan Vu Port">Tan Vu Port</option>
+                    <option value="Lach Huyen Port">Lach Huyen Port</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label><i class="fas fa-road"></i> Quãng đường đã chạy (km)</label>
+                <input type="number" id="km_driven" value="35.2" step="0.5">
+            </div>
+            <div class="button-group">
+                <button id="startIdleBtn" class="btn-primary"><i class="fas fa-play"></i> 🚛 Xe vào cảng</button>
+                <button id="endIdleBtn" class="btn-secondary" disabled><i class="fas fa-stop"></i> ✅ Xe rời cảng</button>
+            </div>
+            <div id="idleTimer" style="margin-top: 15px; text-align: center; background: #eef3f0; border-radius: 48px; padding: 8px;">
+                ⏱️ Thời gian chờ: <strong id="timerDisplay">0 giây</strong>
+            </div>
+        </div>
+        <div id="simulateResult" class="result-toast"></div>
+    </div>
+    <footer><p>EcoNudge Gate v3 – Ray-casting & Loss Aversion Nudge</p></footer>
+</div>
+<script src="{{ url_for('static', filename='app_script.js') }}"></script>
+</body>
+</html>
