@@ -1,6 +1,6 @@
 function safeNumber(value) {
     let num = Number(value);
-    return isNaN(num) ? 0 : num;
+    return isNaN(num) ? 0 : Math.abs(num); // đảm bảo dương
 }
 function formatNumber(num, decimals = 2) {
     return safeNumber(num).toFixed(decimals);
@@ -52,9 +52,13 @@ async function loadHeatmap() {
     } catch (err) { console.warn(err); }
 }
 
-async function runEconomicForecast() {
+async function updateEconomicForecast() {
     const soXe = parseInt(document.getElementById('soXe').value, 10);
     const soGio = parseFloat(document.getElementById('soGio').value);
+    if (soXe === 0 || soGio <= 0) {
+        document.getElementById('economicResult').innerHTML = `<div class="economic-line"><i class="fas fa-info-circle"></i> Chưa có dữ liệu idling hợp lệ. Hãy tạo sự kiện từ App.</div>`;
+        return;
+    }
     try {
         const res = await fetch(`/api/economic_analysis?so_xe=${soXe}&so_gio=${soGio}`);
         const data = await res.json();
@@ -76,26 +80,28 @@ async function runEconomicForecast() {
     } catch (err) { document.getElementById('economicResult').innerHTML = `<div>Lỗi: ${err.message}</div>`; }
 }
 
-async function loadActualDataAndForecast() {
+async function loadActualDataAndUpdate() {
     try {
         const res = await fetch('/api/actual_statistics');
         const data = await res.json();
-        if (data.so_xe > 0) {
-            document.getElementById('soXe').value = data.so_xe;
-            document.getElementById('soGio').value = data.trung_binh_gio_cho;
-        }
-        runEconomicForecast();
+        document.getElementById('soXe').value = data.so_xe;
+        document.getElementById('soGio').value = data.trung_binh_gio_cho;
+        await updateEconomicForecast();
     } catch (err) {
-        console.warn('Không lấy được dữ liệu thực tế, dùng mặc định');
-        runEconomicForecast();
+        console.warn('Không lấy được dữ liệu thực tế');
+        updateEconomicForecast();
     }
 }
 
-document.getElementById('calcEconomicBtn').addEventListener('click', runEconomicForecast);
+document.getElementById('refreshBtn').addEventListener('click', () => {
+    loadKPI();
+    loadHeatmap();
+    loadActualDataAndUpdate();
+});
+
 document.getElementById('exportExcelBtn').onclick = () => window.location.href = '/api/export/excel';
 document.getElementById('exportPdfBtn').onclick = () => window.location.href = '/api/export/pdf';
-document.getElementById('refreshBtn').onclick = () => { loadKPI(); loadHeatmap(); loadActualDataAndForecast(); };
 
 loadKPI();
 loadHeatmap();
-loadActualDataAndForecast();
+loadActualDataAndUpdate();

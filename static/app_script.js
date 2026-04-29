@@ -4,7 +4,6 @@ function safeNumber(value) {
     return isNaN(num) ? 0 : num;
 }
 
-// Timer variables
 let startTime = null;
 let timerInterval = null;
 let isIdling = false;
@@ -43,14 +42,24 @@ startBtn.addEventListener('click', () => {
 
 endBtn.addEventListener('click', async () => {
     if (!isIdling || !startTime) return;
-    const idleSeconds = Math.floor((Date.now() - startTime) / 1000);
+    let idleSeconds = Math.floor((Date.now() - startTime) / 1000);
+    if (idleSeconds < 0) idleSeconds = 0; // đảm bảo không âm
+
     const vehicle_id = vehicleIdInput.value.trim();
     const port_name = portNameSelect.value;
     const km_driven = parseFloat(kmDrivenInput.value) || 0;
+
     if (idleSeconds <= 0) {
-        resultDiv.innerHTML = `<div><i class="fas fa-exclamation-triangle"></i> Thời gian chờ không hợp lệ.</div>`;
+        resultDiv.innerHTML = `<div><i class="fas fa-exclamation-triangle"></i> Thời gian chờ không hợp lệ (${idleSeconds} giây). Vui lòng thử lại.</div>`;
+        // Reset lại timer để có thể bắt đầu lại
+        endBtn.disabled = false;
+        startBtn.disabled = true;
+        startTime = Date.now();
+        isIdling = true;
+        timerInterval = setInterval(updateTimerDisplay, 1000);
         return;
     }
+
     endBtn.disabled = true;
     startBtn.disabled = false;
     if (timerInterval) clearInterval(timerInterval);

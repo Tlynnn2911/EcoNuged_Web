@@ -39,12 +39,12 @@ def get_or_create_state(vehicle_id):
     return xe_state[vehicle_id]
 
 @app.route('/')
-def app_page():
-    return render_template('app.html')
-
-@app.route('/dashboard')
 def dashboard_page():
     return render_template('dashboard.html')
+
+@app.route('/app')
+def app_page():
+    return render_template('app.html')
 
 @app.route('/api/zones', methods=['GET'])
 def get_zones():
@@ -66,6 +66,10 @@ def simulate_idling():
     port_name = data['port_name']
     idle_seconds = float(data['idle_seconds'])
     km_driven = float(data.get('km_driven', 0))
+
+    # Đảm bảo idle_seconds không âm
+    if idle_seconds < 0:
+        idle_seconds = 0
 
     co2_data = co2_calc.tinh_co2_toan_phan(km_driven, idle_seconds)
     log_entry = {
@@ -125,13 +129,14 @@ def economic_analysis():
         "truoc_ap_dung": analysis.get("truoc_ap_dung", {})
     })
 
-# ---------- THÊM ENDPOINT MỚI ----------
 @app.route('/api/actual_statistics', methods=['GET'])
 def actual_statistics():
-    """Trả về số xe thực tế và trung bình giờ chờ từ dữ liệu log"""
     df = dashboard.nap_du_lieu()
     if df.empty:
-        return jsonify({"so_xe": 0, "trung_binh_gio_cho": 2.5, "tong_co2_kg": 0})
+        return jsonify({"so_xe": 0, "trung_binh_gio_cho": 0, "tong_co2_kg": 0})
+    # Lọc bỏ các giá trị âm (nếu có) và lấy trị tuyệt đối
+    df["Tổng_Giây_Chờ"] = df["Tổng_Giây_Chờ"].abs()
+    df["Lượng_CO2_kg"] = df["Lượng_CO2_kg"].abs()
     so_xe = df["ID_Xe"].nunique()
     tong_giay = df["Tổng_Giây_Chờ"].sum()
     tong_gio = tong_giay / 3600
