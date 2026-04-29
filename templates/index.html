@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>EcoNudge Gate v3 | Giám sát phát thải thông minh</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -10,7 +10,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-
 <div class="app-container">
     <header class="hero">
         <div class="hero-content">
@@ -30,12 +29,13 @@
     <div class="main-grid">
         <!-- Cột trái -->
         <div class="col-left">
+            <!-- Card mô phỏng với timer tự động -->
             <div class="card glass-card">
                 <div class="card-header">
                     <i class="fas fa-truck-fast"></i>
-                    <h2>Mô phỏng Idling</h2>
+                    <h2>Mô phỏng Idling thời gian thực</h2>
                 </div>
-                <form id="simulateForm">
+                <div class="simulate-form">
                     <div class="input-group">
                         <label><i class="fas fa-id-card"></i> Mã xe</label>
                         <input type="text" id="vehicle_id" value="15H-001.AI" required>
@@ -48,24 +48,22 @@
                             <option value="HICT">HICT</option>
                         </select>
                     </div>
-                    <div class="input-row">
-                        <div class="input-group">
-                            <label><i class="fas fa-hourglass-half"></i> Thời gian chờ (giây)</label>
-                            <input type="number" id="idle_seconds" value="720" step="10">
-                        </div>
-                        <div class="input-group">
-                            <label><i class="fas fa-road"></i> Quãng đường (km)</label>
-                            <input type="number" id="km_driven" value="35.2" step="0.5">
-                        </div>
+                    <div class="input-group">
+                        <label><i class="fas fa-road"></i> Quãng đường đã chạy (km)</label>
+                        <input type="number" id="km_driven" value="35.2" step="0.5">
                     </div>
-                    <button type="submit" class="btn-primary btn-block">
-                        <i class="fas fa-calculator"></i> Ghi nhận & Tính CO₂
-                    </button>
-                </form>
+                    <div class="button-group">
+                        <button id="startIdleBtn" class="btn-primary"><i class="fas fa-play"></i> 🚛 Xe vào cảng (Bắt đầu chờ)</button>
+                        <button id="endIdleBtn" class="btn-secondary" disabled><i class="fas fa-stop"></i> ✅ Xe rời cảng (Kết thúc chờ)</button>
+                    </div>
+                    <div id="idleTimer" style="margin-top: 15px; font-size: 1.2rem; text-align: center; background: #eef3f0; border-radius: 48px; padding: 8px;">
+                        ⏱️ Thời gian chờ: <strong id="timerDisplay">0 giây</strong>
+                    </div>
+                </div>
                 <div id="simulateResult" class="result-toast"></div>
             </div>
 
-            <!-- Dự báo hiệu quả kinh tế (từng dòng) -->
+            <!-- Dự báo hiệu quả kinh tế -->
             <div class="card glass-card">
                 <div class="card-header">
                     <i class="fas fa-chart-simple"></i>
@@ -85,7 +83,7 @@
                     </button>
                 </div>
                 <div id="economicResult" class="economic-detail">
-                    <!-- Kết quả sẽ hiển thị từng dòng ở đây -->
+                    <!-- Kết quả từng dòng -->
                 </div>
             </div>
         </div>

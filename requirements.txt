@@ -6,3 +6,4 @@ simplejson==4.1.1
 requests==2.33.1
 reportlab==4.4.10
 gunicorn==25.3.0
+gunicorn==25.3.0

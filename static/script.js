@@ -1,20 +1,117 @@
-// Hàm xử lý số an toàn: giữ nguyên giá trị thực (không ép về 0 nếu âm, nhưng để biểu đồ dùng Math.max)
+// Helper: chuyển số an toàn, không ép về 0 nếu âm (để giữ nguyên dữ liệu gốc)
 function safeNumber(value) {
     let num = Number(value);
     return isNaN(num) ? 0 : num;
 }
-
 function formatNumber(num, decimals = 2) {
     return safeNumber(num).toFixed(decimals);
 }
-
-// Helper format tiền
 function formatCurrency(vnd) {
     let val = safeNumber(vnd);
     return val.toLocaleString('vi-VN') + ' ₫';
 }
 
-// Cập nhật KPI
+// Biến timer
+let startTime = null;
+let timerInterval = null;
+let isIdling = false;
+
+// DOM elements
+const vehicleIdInput = document.getElementById('vehicle_id');
+const portNameSelect = document.getElementById('port_name');
+const kmDrivenInput = document.getElementById('km_driven');
+const startBtn = document.getElementById('startIdleBtn');
+const endBtn = document.getElementById('endIdleBtn');
+const timerDisplay = document.getElementById('timerDisplay');
+const simulateResultDiv = document.getElementById('simulateResult');
+
+// Cập nhật hiển thị timer
+function updateTimerDisplay() {
+    if (startTime && isIdling) {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        timerDisplay.textContent = `${elapsed} giây`;
+    } else {
+        timerDisplay.textContent = `0 giây`;
+    }
+}
+
+// Bắt đầu idling
+startBtn.addEventListener('click', () => {
+    if (isIdling) {
+        simulateResultDiv.innerHTML = `<div><i class="fas fa-exclamation-triangle"></i> Xe đang trong quá trình chờ, hãy kết thúc trước khi bắt đầu mới.</div>`;
+        return;
+    }
+    if (timerInterval) clearInterval(timerInterval);
+    startTime = Date.now();
+    isIdling = true;
+    updateTimerDisplay();
+    timerInterval = setInterval(updateTimerDisplay, 1000);
+    startBtn.disabled = true;
+    endBtn.disabled = false;
+    simulateResultDiv.innerHTML = `<div><i class="fas fa-hourglass-start"></i> Đã ghi nhận xe vào cảng, bắt đầu tính thời gian chờ...</div>`;
+});
+
+// Kết thúc idling và gửi dữ liệu
+endBtn.addEventListener('click', async () => {
+    if (!isIdling || !startTime) return;
+    
+    const idleSeconds = Math.floor((Date.now() - startTime) / 1000);
+    const vehicle_id = vehicleIdInput.value.trim();
+    const port_name = portNameSelect.value;
+    const km_driven = parseFloat(kmDrivenInput.value) || 0;
+    
+    if (idleSeconds <= 0) {
+        simulateResultDiv.innerHTML = `<div><i class="fas fa-exclamation-triangle"></i> Thời gian chờ không hợp lệ.</div>`;
+        return;
+    }
+    
+    // Tạm thời vô hiệu nút để tránh gửi nhiều lần
+    endBtn.disabled = true;
+    startBtn.disabled = false;
+    if (timerInterval) clearInterval(timerInterval);
+    isIdling = false;
+    startTime = null;
+    
+    const payload = {
+        vehicle_id: vehicle_id,
+        port_name: port_name,
+        idle_seconds: idleSeconds,
+        km_driven: km_driven
+    };
+    
+    try {
+        const res = await fetch('/api/simulate_idling', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        const co2 = safeNumber(result.co2_kg);
+        const nudgeMsg = result.nudge?.canh_bao?.noi_dung || 'Đã ghi nhận thành công';
+        
+        let html = `
+            <div><i class="fas fa-check-circle" style="color:#1b6e4e;"></i> <strong>✅ Đã ghi nhận sự kiện</strong></div>
+            <div><i class="fas fa-clock"></i> <strong>Thời gian chờ thực tế:</strong> ${idleSeconds} giây (${(idleSeconds/60).toFixed(1)} phút)</div>
+            <div><i class="fas fa-cloud"></i> <strong>CO₂ phát thải:</strong> ${co2.toFixed(2)} kg</div>
+            <div><i class="fas fa-road"></i> <strong>Quãng đường đã chạy:</strong> ${km_driven} km</div>
+            <div><i class="fas fa-bullhorn"></i> <strong>📢 Nudge:</strong> <em>${nudgeMsg.substring(0, 200)}</em></div>
+        `;
+        simulateResultDiv.innerHTML = html;
+        timerDisplay.textContent = `0 giây`;
+        loadKPI();
+        loadHeatmap();
+    } catch (err) {
+        simulateResultDiv.innerHTML = `<div><i class="fas fa-exclamation-triangle"></i> Lỗi: ${err.message}</div>`;
+        // Nếu lỗi, khôi phục trạng thái để thử lại
+        endBtn.disabled = false;
+        startBtn.disabled = true;
+        startTime = Date.now();
+        isIdling = true;
+        timerInterval = setInterval(updateTimerDisplay, 1000);
+    }
+});
+
+// ========== KPI và Heatmap ==========
 async function loadKPI() {
     try {
         const res = await fetch('/api/kpi');
@@ -42,15 +139,13 @@ async function loadKPI() {
     }
 }
 
-// Heatmap - đảm bảo cột từ dưới lên (bắt đầu từ 0) bằng cách lấy trị tuyệt đối nếu backend trả về âm (tạm thời fix)
 let chart;
 async function loadHeatmap() {
     try {
         const res = await fetch('/api/heatmap');
         const data = await res.json();
         const ports = data.ports || [];
-        // Nếu giá trị CO₂ âm -> chuyển thành dương để cột vẫn hiển thị đúng hướng (hoặc có thể set 0 nếu muốn)
-        let co2Values = (data.co2 || []).map(v => Math.abs(safeNumber(v)));
+        let co2Values = (data.co2 || []).map(v => Math.abs(safeNumber(v))); // lấy trị tuyệt đối để cột dương
         const ctx = document.getElementById('co2Chart').getContext('2d');
         if (chart) chart.destroy();
         chart = new Chart(ctx, {
@@ -77,49 +172,7 @@ async function loadHeatmap() {
     }
 }
 
-// Mô phỏng idling - hiển thị từng dòng với icon
-document.getElementById('simulateForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const payload = {
-        vehicle_id: document.getElementById('vehicle_id').value,
-        port_name: document.getElementById('port_name').value,
-        idle_seconds: parseFloat(document.getElementById('idle_seconds').value),
-        km_driven: parseFloat(document.getElementById('km_driven').value)
-    };
-    const btn = e.target.querySelector('button[type="submit"]');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Đang xử lý...';
-    try {
-        const res = await fetch('/api/simulate_idling', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        const result = await res.json();
-        const co2 = safeNumber(result.co2_kg);
-        const nudgeMsg = result.nudge?.canh_bao?.noi_dung || 'Đã ghi nhận thành công';
-        const tonThatMoiGio = result.nudge?.ton_that_kinh_te?.tien_mat_vnd_moi_gio || 0;
-        
-        let html = `
-            <div><i class="fas fa-cloud"></i> <strong>CO₂ phát thải:</strong> ${co2.toFixed(2)} kg</div>
-            <div><i class="fas fa-hourglass-half"></i> <strong>Thời gian chờ:</strong> ${payload.idle_seconds} giây</div>
-            <div><i class="fas fa-road"></i> <strong>Quãng đường đã chạy:</strong> ${payload.km_driven} km</div>
-            <div><i class="fas fa-bullhorn"></i> <strong>📢 Nudge:</strong> <em>${nudgeMsg.substring(0, 200)}</em></div>
-        `;
-        if (tonThatMoiGio > 0) {
-            html += `<div><i class="fas fa-chart-line"></i> <strong>Ước tính tổn thất:</strong> ${formatCurrency(tonThatMoiGio)}/giờ</div>`;
-        }
-        document.getElementById('simulateResult').innerHTML = html;
-        loadKPI();
-        loadHeatmap();
-    } catch (err) {
-        document.getElementById('simulateResult').innerHTML = `<div><i class="fas fa-exclamation-triangle"></i> Lỗi: ${err.message}</div>`;
-    } finally {
-        btn.innerHTML = originalText;
-    }
-});
-
-// Dự báo kinh tế
+// Dự báo kinh tế (hiển thị từng dòng)
 document.getElementById('calcEconomicBtn').addEventListener('click', async () => {
     const soXe = parseInt(document.getElementById('soXe').value, 10);
     const soGio = parseFloat(document.getElementById('soGio').value);
@@ -138,7 +191,7 @@ document.getElementById('calcEconomicBtn').addEventListener('click', async () =>
             <div class="economic-line"><i class="fas fa-message"></i> <strong>Thông điệp:</strong> ${thongDiep}</div>
         `;
         if (data.truoc_ap_dung && data.truoc_ap_dung.tong_gio_thang) {
-            html += `<hr class="economic-hr">`;
+            html += `<hr>`;
             html += `<div class="economic-line"><i class="fas fa-clock"></i> <strong>Tổng giờ idling/tháng:</strong> ${safeNumber(data.truoc_ap_dung.tong_gio_thang).toFixed(0)} giờ</div>`;
             html += `<div class="economic-line"><i class="fas fa-co2"></i> <strong>CO₂ hiện tại:</strong> ${safeNumber(data.truoc_ap_dung.tong_co2_kg).toFixed(2)} kg</div>`;
         }

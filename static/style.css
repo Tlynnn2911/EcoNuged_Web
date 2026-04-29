@@ -120,13 +120,12 @@ input:focus, select:focus {
     border-color: #2c8c6e;
     box-shadow: 0 0 0 3px rgba(44,140,110,0.2);
 }
-.input-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
+.button-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
 }
 .btn-primary, .btn-secondary {
-    background: #1b6e4e;
     border: none;
     padding: 12px 0;
     font-weight: 700;
@@ -139,16 +138,25 @@ input:focus, select:focus {
     justify-content: center;
     gap: 8px;
     transition: 0.2s;
+    flex: 1;
 }
-.btn-primary:hover, .btn-secondary:hover {
+.btn-primary {
+    background: #1b6e4e;
+}
+.btn-primary:hover {
     background: #0f543b;
     transform: translateY(-2px);
 }
 .btn-secondary {
     background: #2d5a4a;
 }
-.btn-block {
-    width: 100%;
+.btn-secondary:hover:not(:disabled) {
+    background: #1e3f33;
+    transform: translateY(-2px);
+}
+.btn-secondary:disabled {
+    background: #98afa5;
+    cursor: not-allowed;
 }
 .result-toast {
     margin-top: 16px;
@@ -157,6 +165,18 @@ input:focus, select:focus {
     padding: 12px;
     font-size: 0.85rem;
     border-left: 4px solid #1b6e4e;
+}
+.result-toast div, .economic-detail .economic-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+.result-toast i, .economic-detail i {
+    width: 28px;
+    font-size: 1.1rem;
+    color: #1b6e4e;
 }
 .kpi-stats {
     display: flex;
@@ -232,18 +252,25 @@ input:focus, select:focus {
     padding: 16px;
     font-size: 0.9rem;
     margin-top: 8px;
-    font-weight: 500;
 }
-.economic-detail p {
-    margin: 8px 0;
+.economic-detail .economic-line {
     display: flex;
-    justify-content: space-between;
-    border-bottom: 1px dashed #bdd9ce;
-    padding-bottom: 6px;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
 }
 .economic-detail .highlight {
-    color: #1b6e4e;
+    background: #e5f4ed;
+    padding: 4px 12px;
+    border-radius: 40px;
     font-weight: 700;
+    color: #1b6e4e;
+    display: inline-block;
+}
+.economic-detail hr {
+    margin: 12px 0;
+    border: 0;
+    border-top: 1px solid #c0d6cb;
 }
 .action-bar {
     display: flex;
@@ -274,36 +301,4 @@ footer {
     border-top: 1px solid #c0d6cb;
     padding-top: 20px;
     margin-top: 15px;
-}
-/* Kết quả mô phỏng và dự báo kinh tế dùng chung style */
-.result-toast div, .economic-detail .economic-line {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-bottom: 12px;
-    padding: 6px 0;
-    border-bottom: 1px dashed #e0ede6;
-}
-.result-toast div:last-child, .economic-detail .economic-line:last-child {
-    border-bottom: none;
-}
-.result-toast i, .economic-detail .economic-line i {
-    width: 28px;
-    font-size: 1.2rem;
-    color: #1b6e4e;
-    text-align: center;
-}
-.economic-detail .highlight {
-    background: #e5f4ed;
-    padding: 4px 12px;
-    border-radius: 40px;
-    font-weight: 700;
-    color: #1b6e4e;
-    display: inline-block;
-}
-.economic-detail hr.economic-hr {
-    margin: 12px 0;
-    border: 0;
-    border-top: 1px solid #c0d6cb;
 }
