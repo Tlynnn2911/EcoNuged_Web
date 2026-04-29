@@ -126,4 +126,4 @@ if __name__ == '__main__':
     os.makedirs('04_DATA/reports', exist_ok=True)
     os.makedirs('03_JSON', exist_ok=True)
     logging.basicConfig(level=logging.INFO)
-    app.run(debug=True, port=5000)
+    app.run(host="0.0.0.0", port=10000, debug=True, use_reloader=False)
