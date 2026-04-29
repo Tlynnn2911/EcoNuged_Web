@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoNudge Gate v3 | Giám sát phát thải thông minh</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="app-container">
+    <header class="hero">
+        <div class="hero-content">
+            <div class="brand">
+                <i class="fas fa-leaf brand-icon"></i>
+                <h1>EcoNudge <span class="light">Gate v3</span></h1>
+            </div>
+            <p class="tagline">Giám sát idling thông minh · Cắt giảm CO₂ & tổn thất kinh tế</p>
+            <div class="badge-group">
+                <span class="badge"><i class="fas fa-chart-line"></i> GHG Scope 3</span>
+                <span class="badge"><i class="fas fa-microchip"></i> Ray-casting AI</span>
+                <span class="badge"><i class="fas fa-brain"></i> Loss Aversion Nudge</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-grid">
+        <!-- Cột trái -->
+        <div class="col-left">
+            <div class="card glass-card">
+                <div class="card-header">
+                    <i class="fas fa-truck-fast"></i>
+                    <h2>Mô phỏng Idling</h2>
+                </div>
+                <form id="simulateForm">
+                    <div class="input-group">
+                        <label><i class="fas fa-id-card"></i> Mã xe</label>
+                        <input type="text" id="vehicle_id" value="15H-001.AI" required>
+                    </div>
+                    <div class="input-group">
+                        <label><i class="fas fa-anchor"></i> Cảng</label>
+                        <select id="port_name">
+                            <option value="Tan Vu Port">Tan Vu Port</option>
+                            <option value="Lach Huyen Port">Lach Huyen Port</option>
+                            <option value="HICT">HICT</option>
+                        </select>
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label><i class="fas fa-hourglass-half"></i> Thời gian chờ (giây)</label>
+                            <input type="number" id="idle_seconds" value="720" step="10">
+                        </div>
+                        <div class="input-group">
+                            <label><i class="fas fa-road"></i> Quãng đường (km)</label>
+                            <input type="number" id="km_driven" value="35.2" step="0.5">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary btn-block">
+                        <i class="fas fa-calculator"></i> Ghi nhận & Tính CO₂
+                    </button>
+                </form>
+                <div id="simulateResult" class="result-toast"></div>
+            </div>
+
+            <!-- Dự báo hiệu quả kinh tế (từng dòng) -->
+            <div class="card glass-card">
+                <div class="card-header">
+                    <i class="fas fa-chart-simple"></i>
+                    <h2>Dự báo hiệu quả kinh tế</h2>
+                </div>
+                <div class="economic-controls">
+                    <div class="input-group">
+                        <label>Số lượng xe</label>
+                        <input type="number" id="soXe" value="50">
+                    </div>
+                    <div class="input-group">
+                        <label>Giờ chờ TB/xe (h)</label>
+                        <input type="number" id="soGio" value="2.5" step="0.1">
+                    </div>
+                    <button id="calcEconomicBtn" class="btn-secondary">
+                        <i class="fas fa-chart-line"></i> Dự báo
+                    </button>
+                </div>
+                <div id="economicResult" class="economic-detail">
+                    <!-- Kết quả sẽ hiển thị từng dòng ở đây -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột phải -->
+        <div class="col-right">
+            <div class="card glass-card kpi-card">
+                <div class="card-header">
+                    <i class="fas fa-chalkboard-user"></i>
+                    <h2>Bảng điều khiển KPI</h2>
+                    <span class="update-time" id="kpiTimestamp"></span>
+                </div>
+                <div class="kpi-stats" id="kpiSummary">
+                    <div class="stat"><i class="fas fa-truck"></i> <span>--</span> <small>Xe giám sát</small></div>
+                    <div class="stat"><i class="fas fa-cloud"></i> <span>--</span> <small>kg CO₂</small></div>
+                    <div class="stat"><i class="fas fa-clock"></i> <span>--</span> <small>giờ chờ</small></div>
+                </div>
+                <div class="leaderboard">
+                    <h3><i class="fas fa-trophy"></i> Top tài xế xanh</h3>
+                    <ul id="topDrivers" class="driver-list"></ul>
+                </div>
+            </div>
+
+            <div class="card glass-card">
+                <div class="card-header">
+                    <i class="fas fa-chart-column"></i>
+                    <h2>Phân bổ CO₂ theo cảng</h2>
+                </div>
+                <canvas id="co2Chart" height="220"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <button id="exportExcelBtn" class="btn-excel"><i class="fas fa-file-excel"></i> Xuất Excel ESG</button>
+        <button id="exportPdfBtn" class="btn-pdf"><i class="fas fa-file-pdf"></i> Xuất PDF báo cáo</button>
+        <button id="refreshBtn" class="btn-refresh"><i class="fas fa-sync-alt"></i> Làm mới dữ liệu</button>
+    </div>
+    <footer>
+        <p><i class="fas fa-shield-alt"></i> EcoNudge Gate v3 – Ray-casting thuần Python, Nudge Loss Aversion & Social Proof | Định mức 2.5 L/h</p>
+    </footer>
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

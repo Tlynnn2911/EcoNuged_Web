@@ -1,0 +1,15 @@
+{
+    "EF_diesel_kgCO2_per_liter": 2.63,
+    "idling_consumption_l_per_hour": 2.5,
+    "gia_dau_ban_le_vnd_per_liter": 31040,
+    "chi_phi_nhan_cong_vnd_per_hour": 80000,
+    "chi_phi_co_hoi_vnd_per_hour": 180000,
+    "tong_ton_that_vnd_per_hour": 297600,
+    "heso_tiet_kiem_muc_tieu": 0.3,
+    "he_so_ef_diesel": 2.683,
+    "nguon_phap_ly": "QĐ 2626/QĐ-BTNMT",
+    "dinh_muc_tieu_thu": {
+        "xe_container_cho_lit_gio": 2.5,
+        "xe_container_chay_lit_km": 0.25
+    }
+}

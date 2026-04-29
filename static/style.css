@@ -1,0 +1,309 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(145deg, #eef5f0 0%, #e2ece4 100%);
+    color: #1e2f2c;
+    padding: 24px 20px;
+}
+.app-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+.hero {
+    background: linear-gradient(135deg, #0f3b2c, #1b6e4e);
+    border-radius: 2rem;
+    margin-bottom: 2rem;
+    padding: 2rem 2rem 1.8rem;
+    color: white;
+    box-shadow: 0 20px 35px -12px rgba(0,0,0,0.2);
+}
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+.brand-icon {
+    font-size: 2.2rem;
+}
+.light {
+    font-weight: 400;
+    color: #d9f0e6;
+}
+.tagline {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin-top: 8px;
+}
+.badge-group {
+    margin-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.badge {
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(4px);
+    padding: 6px 14px;
+    border-radius: 40px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 28px;
+    margin-bottom: 32px;
+}
+@media (max-width: 880px) {
+    .main-grid { grid-template-columns: 1fr; }
+}
+.glass-card {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(2px);
+    border-radius: 32px;
+    box-shadow: 0 12px 28px rgba(0, 32, 16, 0.08);
+    padding: 1.5rem;
+    border: 1px solid rgba(100, 150, 120, 0.2);
+}
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 2px solid #bdd9ce;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+}
+.card-header i {
+    font-size: 1.6rem;
+    color: #1b6e4e;
+}
+.card-header h2 {
+    font-size: 1.35rem;
+    font-weight: 600;
+}
+.update-time {
+    margin-left: auto;
+    font-size: 0.7rem;
+    color: #5b7c6e;
+}
+.input-group {
+    margin-bottom: 1rem;
+}
+.input-group label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #1e4a3a;
+    margin-bottom: 6px;
+}
+input, select {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 24px;
+    border: 1px solid #cbdcd2;
+    background: white;
+    font-size: 0.9rem;
+}
+input:focus, select:focus {
+    outline: none;
+    border-color: #2c8c6e;
+    box-shadow: 0 0 0 3px rgba(44,140,110,0.2);
+}
+.input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+.btn-primary, .btn-secondary {
+    background: #1b6e4e;
+    border: none;
+    padding: 12px 0;
+    font-weight: 700;
+    border-radius: 40px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: 0.2s;
+}
+.btn-primary:hover, .btn-secondary:hover {
+    background: #0f543b;
+    transform: translateY(-2px);
+}
+.btn-secondary {
+    background: #2d5a4a;
+}
+.btn-block {
+    width: 100%;
+}
+.result-toast {
+    margin-top: 16px;
+    background: #e7f5ef;
+    border-radius: 24px;
+    padding: 12px;
+    font-size: 0.85rem;
+    border-left: 4px solid #1b6e4e;
+}
+.kpi-stats {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 28px;
+}
+.stat {
+    background: #eef3f0;
+    border-radius: 28px;
+    padding: 12px;
+    text-align: center;
+    flex: 1;
+}
+.stat i {
+    font-size: 1.6rem;
+    color: #236b50;
+    display: block;
+    margin-bottom: 6px;
+}
+.stat span {
+    font-size: 1.8rem;
+    font-weight: 800;
+    display: block;
+    line-height: 1;
+}
+.stat small {
+    font-size: 0.7rem;
+    color: #336e58;
+}
+.leaderboard h3 {
+    font-size: 1rem;
+    margin: 10px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #1e5a46;
+}
+.driver-list {
+    list-style: none;
+    background: #f8faf7;
+    border-radius: 24px;
+    padding: 8px;
+}
+.driver-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 12px;
+    border-bottom: 1px solid #e2ebe5;
+    font-size: 0.85rem;
+}
+.driver-list li strong {
+    background: #1b6e4e20;
+    padding: 3px 8px;
+    border-radius: 40px;
+    font-weight: 600;
+}
+.economic-controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    margin-bottom: 16px;
+}
+.economic-controls .input-group {
+    flex: 1;
+    min-width: 100px;
+}
+.economic-detail {
+    background: #eef3ef;
+    border-radius: 24px;
+    padding: 16px;
+    font-size: 0.9rem;
+    margin-top: 8px;
+    font-weight: 500;
+}
+.economic-detail p {
+    margin: 8px 0;
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px dashed #bdd9ce;
+    padding-bottom: 6px;
+}
+.economic-detail .highlight {
+    color: #1b6e4e;
+    font-weight: 700;
+}
+.action-bar {
+    display: flex;
+    gap: 16px;
+    justify-content: flex-end;
+    margin: 12px 0 20px;
+}
+.btn-excel, .btn-pdf, .btn-refresh {
+    border: none;
+    padding: 10px 20px;
+    border-radius: 40px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.2s;
+}
+.btn-excel { background: #1f7b67; color: white; }
+.btn-pdf { background: #c44536; color: white; }
+.btn-refresh { background: #3a6b5b; color: white; }
+.btn-excel:hover, .btn-pdf:hover, .btn-refresh:hover { filter: brightness(0.92); transform: translateY(-1px); }
+footer {
+    text-align: center;
+    font-size: 0.7rem;
+    color: #4e6b60;
+    border-top: 1px solid #c0d6cb;
+    padding-top: 20px;
+    margin-top: 15px;
+}
+/* Kết quả mô phỏng và dự báo kinh tế dùng chung style */
+.result-toast div, .economic-detail .economic-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+    padding: 6px 0;
+    border-bottom: 1px dashed #e0ede6;
+}
+.result-toast div:last-child, .economic-detail .economic-line:last-child {
+    border-bottom: none;
+}
+.result-toast i, .economic-detail .economic-line i {
+    width: 28px;
+    font-size: 1.2rem;
+    color: #1b6e4e;
+    text-align: center;
+}
+.economic-detail .highlight {
+    background: #e5f4ed;
+    padding: 4px 12px;
+    border-radius: 40px;
+    font-weight: 700;
+    color: #1b6e4e;
+    display: inline-block;
+}
+.economic-detail hr.economic-hr {
+    margin: 12px 0;
+    border: 0;
+    border-top: 1px solid #c0d6cb;
+}

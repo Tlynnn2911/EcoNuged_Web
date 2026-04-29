@@ -1,0 +1,7 @@
+Flask==3.1.1
+pandas==2.3.0
+openpyxl==3.1.5
+fpdf==1.7.2
+simplejson==4.1.1
+requests==2.33.1
+reportlab==4.4.10
